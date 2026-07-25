@@ -76,6 +76,7 @@ async function main() {
 
   for (const step of steps) {
     console.log(`Executing ${step.id}: ${step.action}`);
+    const actionStart = Date.now();
 
     switch (step.action) {
       case "goto":
@@ -95,17 +96,48 @@ async function main() {
         const x = step.x ?? Math.round(vp.width * 0.3);
         const y = step.y ?? Math.round(vp.height * 0.5);
         await page.mouse.move(x, y);
-        await page.mouse.wheel(0, step.amount ?? 400);
+        // A single big wheel() jump reads as an abrupt, unnatural snap.
+        // Split it into small ticks with easing (large steps up front,
+        // tapering off) so the capture reads like a real scroll gesture
+        // instead of a hard cut to a new scroll position.
+        const totalAmount = step.amount ?? 400;
+        const tickCount = 14;
+        for (let i = 0; i < tickCount; i++) {
+          // ease-out: weight ticks so they shrink across the gesture
+          const weight = tickCount - i;
+          const totalWeight = (tickCount * (tickCount + 1)) / 2;
+          const tickAmount = (totalAmount * weight) / totalWeight;
+          await page.mouse.wheel(0, tickAmount);
+          await page.waitForTimeout(25);
+        }
         break;
       }
     }
 
-    // Pace this action's on-screen dwell time to match its narration clip,
-    // so the final composite doesn't need to time-warp footage after the fact.
+    // Pace this step's total on-screen time (action + dwell) to match its
+    // narration clip, so the final composite doesn't need to time-warp
+    // footage after the fact. The action itself (page load, click,
+    // in-page transition animations) takes real, variable wall-clock time —
+    // if we added the full dwell on top of that unconditionally, every step
+    // would run longer than planned and the whole capture would drift later
+    // and later behind the narration track. Instead we only wait out
+    // whatever's left of the budget after the action's own elapsed time.
     const t = timingById.get(step.id) as any;
-    const narrationDurationMs = t?.durationSec ? t.durationSec * 1000 : 1200;
-    const extraDelay = step.postDelayMs ?? 0;
-    await page.waitForTimeout(narrationDurationMs + extraDelay);
+    const narrationDurationMs =
+      t && typeof t.durationSec === "number" ? t.durationSec * 1000 : 1200;
+    // DEFAULT_GAP_MS must match scripts/tts.ts's fallback — see the comment
+    // there for why the two have to agree.
+    const DEFAULT_GAP_MS = 400;
+    const extraDelay = step.postDelayMs ?? DEFAULT_GAP_MS;
+    const budgetMs = narrationDurationMs + extraDelay;
+    const elapsedMs = Date.now() - actionStart;
+    const remainingMs = Math.max(0, budgetMs - elapsedMs);
+    if (elapsedMs > budgetMs) {
+      console.warn(
+        `${step.id}: action took ${elapsedMs}ms, longer than its ${budgetMs}ms budget — this step will run behind.`
+      );
+    }
+    await page.waitForTimeout(remainingMs);
   }
 
   await context.close();

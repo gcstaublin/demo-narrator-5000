@@ -11,3 +11,8 @@ audio/
 assets/*.mp3
 assets/*.wav
 assets/*.m4a
+
+# local test renders and personal demo configs — not for the public repo
+/local-renders/
+/config/grantland.json
+/steps/grantland-tour.json

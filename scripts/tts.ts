@@ -41,7 +41,13 @@ if (!apiKey || apiKey.startsWith("REPLACE_WITH_") || apiKey === "sk-...") {
   process.exit(1);
 }
 
-const SILENCE_BETWEEN_STEPS_SEC = 0.6; // breathing room between narration lines
+// Fallback gap when a step doesn't specify postDelayMs. Must match the same
+// fallback in scripts/capture.ts's `extraDelay` — both scripts build a
+// per-step time budget independently (this one for the audio track's silence
+// padding, that one for how long the browser dwells on-screen), and if the
+// two ever disagree, narration and footage will drift out of sync exactly
+// like the site-transition-latency bug this replaced.
+const DEFAULT_GAP_MS = 400;
 const OPENAI_TTS_MODEL = "gpt-4o-mini-tts";
 const OPENAI_VOICE = "alloy"; // swap for any supported voice
 
@@ -49,6 +55,7 @@ type Step = {
   id: string;
   action: string;
   narration?: string;
+  postDelayMs?: number;
   [key: string]: unknown;
 };
 
@@ -109,9 +116,31 @@ async function main() {
   const concatListPath = "audio/concat-list.txt";
   const concatLines: string[] = [];
 
+  // Every step — narrated or silent — occupies real on-screen time in the
+  // capture (a click's settle delay, a scroll's pause, etc). The audio
+  // track's silence padding has to account for silent steps too, or the
+  // audio and video will drift apart step by step exactly like they did
+  // before this fix.
+  function silenceClipPath(stepId: string) {
+    return path.join("audio", `_silence-${stepId}.mp3`);
+  }
+  function writeSilence(seconds: number, outPath: string) {
+    execSync(
+      `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${seconds} -q:a 9 "${outPath}"`
+    );
+  }
+
   for (const step of steps) {
+    const gapSec = (step.postDelayMs ?? DEFAULT_GAP_MS) / 1000;
+
     if (!step.narration) {
       timing.push({ id: step.id, startSec: cursor, durationSec: 0 });
+      if (gapSec > 0) {
+        const silPath = silenceClipPath(step.id);
+        writeSilence(gapSec, silPath);
+        concatLines.push(`file '${path.resolve(silPath)}'`);
+      }
+      cursor += gapSec;
       continue;
     }
 
@@ -130,16 +159,14 @@ async function main() {
     });
 
     concatLines.push(`file '${path.resolve(clipPath)}'`);
-    // insert silence gap after each clip so the stitched track has breathing room
-    concatLines.push(`file '${path.resolve("audio/_silence.mp3")}'`);
+    if (gapSec > 0) {
+      const silPath = silenceClipPath(step.id);
+      writeSilence(gapSec, silPath);
+      concatLines.push(`file '${path.resolve(silPath)}'`);
+    }
 
-    cursor += duration + SILENCE_BETWEEN_STEPS_SEC;
+    cursor += duration + gapSec;
   }
-
-  // generate a short reusable silence clip for gaps
-  execSync(
-    `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${SILENCE_BETWEEN_STEPS_SEC} -q:a 9 audio/_silence.mp3`
-  );
 
   fs.writeFileSync(concatListPath, concatLines.join("\n"));
   execSync(

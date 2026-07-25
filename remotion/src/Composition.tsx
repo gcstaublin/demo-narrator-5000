@@ -3,6 +3,9 @@ import timing from "../../output/timing.json";
 
 const FPS = 30;
 
+// Toggle burned-in captions on/off without deleting the caption code.
+const SHOW_CAPTIONS = false;
+
 /**
  * This composition does NOT recreate any UI. The background is the actual
  * Playwright recording of the real app (output/raw-capture.webm, converted
@@ -20,17 +23,18 @@ export const DemoComposite: React.FC = () => {
       {/* Background music, ducked well under narration volume */}
       <Audio src={staticFile("music-track.mp3")} volume={0.08} loop />
 
-      {timing.steps
-        .filter((s: any) => s.narration)
-        .map((s: any) => (
-          <Sequence
-            key={s.id}
-            from={Math.round(s.startSec * FPS)}
-            durationInFrames={Math.round((s.durationSec + 0.4) * FPS)}
-          >
-            <Caption text={s.narration} />
-          </Sequence>
-        ))}
+      {SHOW_CAPTIONS &&
+        timing.steps
+          .filter((s: any) => s.narration)
+          .map((s: any) => (
+            <Sequence
+              key={s.id}
+              from={Math.round(s.startSec * FPS)}
+              durationInFrames={Math.round((s.durationSec + 0.4) * FPS)}
+            >
+              <Caption text={s.narration} />
+            </Sequence>
+          ))}
     </AbsoluteFill>
   );
 };
