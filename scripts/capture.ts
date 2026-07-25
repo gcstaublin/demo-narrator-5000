@@ -22,11 +22,14 @@ if (!stepFile) {
 
 type Step = {
   id: string;
-  action: "goto" | "click" | "fill" | "wait";
+  action: "goto" | "click" | "fill" | "wait" | "scroll";
   path?: string;
   selector?: string;
   value?: string;
   ms?: number;
+  amount?: number;
+  x?: number;
+  y?: number;
   narration?: string;
   postDelayMs?: number;
 };
@@ -48,7 +51,7 @@ async function main() {
     );
   }
 
-  if (!fs.existsSync(config.storageStatePath)) {
+  if (config.storageStatePath && !fs.existsSync(config.storageStatePath)) {
     console.error(
       `No storageState found at ${config.storageStatePath}. Run:\n` +
         `  npx tsx auth/capture-login.ts --env ${envName}\n` +
@@ -61,7 +64,7 @@ async function main() {
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
-    storageState: config.storageStatePath,
+    storageState: config.storageStatePath ?? undefined,
     viewport: config.viewport,
     recordVideo: { dir: "output/video-tmp", size: config.viewport },
   });
@@ -87,6 +90,14 @@ async function main() {
       case "wait":
         await page.waitForTimeout(step.ms ?? 500);
         break;
+      case "scroll": {
+        const vp = page.viewportSize() ?? config.viewport;
+        const x = step.x ?? Math.round(vp.width * 0.3);
+        const y = step.y ?? Math.round(vp.height * 0.5);
+        await page.mouse.move(x, y);
+        await page.mouse.wheel(0, step.amount ?? 400);
+        break;
+      }
     }
 
     // Pace this action's on-screen dwell time to match its narration clip,

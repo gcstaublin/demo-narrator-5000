@@ -12,7 +12,12 @@ narration) → Remotion composite (real footage + voiceover + music + captions) 
 - [ ] `npm install` in this directory (installs Playwright, Remotion, ffmpeg wrapper, etc.)
 - [ ] `npx playwright install chromium`
 - [ ] `ffmpeg` installed and on PATH (`brew install ffmpeg` / `apt install ffmpeg`)
-- [ ] Copy `.env.example` → `.env` and fill in `OPENAI_API_KEY`
+- [ ] Create your own `.env` file — run `cp .env.example .env`, then open
+      **`.env`** (not `.env.example`) and paste in your real `OPENAI_API_KEY`.
+      - **`.env.example` is committed to git; `.env` is not.** Never put a
+        real key in `.env.example` — anything written there is public the
+        moment you push. `scripts/tts.ts` will refuse to run and tell you
+        what's wrong if you skip this step or edit the wrong file.
       - **Important:** OpenAI API billing is separate from any ChatGPT
         subscription. Even if you already pay for ChatGPT Plus/Team, you must
         add a payment method under **API billing** specifically at
@@ -46,6 +51,25 @@ second demo before moving `output/final.mp4` elsewhere will overwrite it —
 or worse, mix one demo's audio with another's footage if you interleave
 runs. Move/rename `output/final.mp4` out before starting the next demo. See
 [ROADMAP.md](ROADMAP.md) for the planned per-demo namespacing fix.
+
+## Step list format
+
+Each entry in a `steps/*.json` file's `steps` array is one browser action.
+`narration` is optional — omit it for silent/setup actions (the capture
+still runs, it just doesn't get a caption or narration-length dwell time).
+`postDelayMs` adds extra dwell time after the action, on top of whatever the
+narration clip's length already provides.
+
+| action   | fields                          | does |
+|----------|----------------------------------|------|
+| `goto`   | `path`                          | Navigate to `path`, resolved against the env's `baseUrl`. |
+| `click`  | `selector`                      | Click the element matching `selector`. |
+| `fill`   | `selector`, `value`             | Type `value` into the element matching `selector`. |
+| `wait`   | `ms`                            | Pause for `ms` (default 500), no page interaction. |
+| `scroll` | `amount`, `x`, `y` (all optional) | Scroll the page by `amount` px (default 400) via a mouse wheel event at `(x, y)` — defaults to roughly the left-third of the viewport, useful for pages with independently-scrolling panels. |
+
+`config/<env>.json`'s `storageStatePath` is optional — omit it (or leave it
+`null`) for public pages that don't need a login session.
 
 ## Directory guide
 

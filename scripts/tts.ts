@@ -25,6 +25,22 @@ if (!STEP_FILE) {
   process.exit(1);
 }
 
+const apiKey = process.env.OPENAI_API_KEY;
+if (!fs.existsSync(".env")) {
+  console.error(
+    "No .env file found. Run `cp .env.example .env`, then open .env " +
+      "(not .env.example) and paste in your real OPENAI_API_KEY."
+  );
+  process.exit(1);
+}
+if (!apiKey || apiKey.startsWith("REPLACE_WITH_") || apiKey === "sk-...") {
+  console.error(
+    "OPENAI_API_KEY in .env is still the placeholder value. Open .env and " +
+      "paste in your real key from platform.openai.com/api-keys."
+  );
+  process.exit(1);
+}
+
 const SILENCE_BETWEEN_STEPS_SEC = 0.6; // breathing room between narration lines
 const OPENAI_TTS_MODEL = "gpt-4o-mini-tts";
 const OPENAI_VOICE = "alloy"; // swap for any supported voice
