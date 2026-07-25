@@ -1,0 +1,5 @@
+{
+  "baseUrl": "https://staging.yourapp.example.com",
+  "storageStatePath": "auth/staging.storageState.json",
+  "viewport": { "width": 1440, "height": 900 }
+}

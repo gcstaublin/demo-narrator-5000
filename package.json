@@ -1,0 +1,33 @@
+{
+  "name": "demonarrator5000",
+  "version": "0.1.0",
+  "description": "Turns a plain-English step list into a narrated demo video of your actual product UI, using Playwright capture + OpenAI TTS + Remotion compositing.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gcstaublin/demonarrator5000.git"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tts": "tsx scripts/tts.ts",
+    "capture": "tsx scripts/capture.ts",
+    "prepare-assets": "bash scripts/prepare-assets.sh",
+    "render": "npm run prepare-assets && remotion render remotion/src/index.ts DemoVideo output/final.mp4"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "playwright": "^1.47.0",
+    "remotion": "^4.0.200",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.200",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.7.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1"
+  }
+}

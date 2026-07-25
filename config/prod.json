@@ -1,0 +1,5 @@
+{
+  "baseUrl": "https://app.yourapp.example.com",
+  "storageStatePath": "auth/prod.storageState.json",
+  "viewport": { "width": 1440, "height": 900 }
+}

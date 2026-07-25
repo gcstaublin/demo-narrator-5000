@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "title": "Creating a project and inviting a teammate",
+    "env": "staging",
+    "startPath": "/dashboard"
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "action": "goto",
+      "path": "/dashboard",
+      "narration": "Let's start from the dashboard, right after logging in."
+    },
+    {
+      "id": "step-2",
+      "action": "click",
+      "selector": "#new-project-button",
+      "narration": "To create a new project, click New Project in the top right."
+    },
+    {
+      "id": "step-3",
+      "action": "fill",
+      "selector": "#project-name-input",
+      "value": "Marketing Site Redesign",
+      "narration": "Give the project a name, then confirm to create it."
+    },
+    {
+      "id": "step-4",
+      "action": "click",
+      "selector": "#create-project-submit",
+      "narration": "And the project is created."
+    },
+    {
+      "id": "step-5",
+      "action": "click",
+      "selector": "#invite-teammate-button",
+      "narration": "Next, let's invite a teammate. Click Invite in the project menu."
+    },
+    {
+      "id": "step-6",
+      "action": "fill",
+      "selector": "#invite-email-input",
+      "value": "teammate@example.com",
+      "narration": "Enter their email address and send the invite.",
+      "postDelayMs": 1500
+    }
+  ]
+}
