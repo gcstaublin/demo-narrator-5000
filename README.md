@@ -39,6 +39,14 @@ npm run render
 
 Output lands in `output/final.mp4`.
 
+**One demo at a time.** Every stage writes to fixed, unnamespaced paths
+(`audio/`, `output/timing.json`, `output/raw-capture.webm`, `public/`,
+`output/final.mp4`) regardless of which step-list file you ran. Starting a
+second demo before moving `output/final.mp4` elsewhere will overwrite it —
+or worse, mix one demo's audio with another's footage if you interleave
+runs. Move/rename `output/final.mp4` out before starting the next demo. See
+[ROADMAP.md](ROADMAP.md) for the planned per-demo namespacing fix.
+
 ## Directory guide
 
 - `config/` — per-environment settings (base URL, storageState path). No secrets committed.

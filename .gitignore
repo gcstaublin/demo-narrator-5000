@@ -6,3 +6,8 @@ audio/
 /public/
 *.log
 .DS_Store
+
+# your own licensed background music — bring-your-own, not redistributed
+assets/*.mp3
+assets/*.wav
+assets/*.m4a

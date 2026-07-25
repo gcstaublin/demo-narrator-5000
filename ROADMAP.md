@@ -45,3 +45,24 @@ using the saved storageState session, inspects the live DOM, resolves your
 direction into actual selectors/actions, and writes the step-list JSON
 automatically. This needs a real staging URL + logged-in session to build
 against.
+
+### Multi-demo support (not yet built)
+
+Every stage currently writes to fixed, unnamespaced paths — `audio/*`,
+`output/timing.json`, `output/raw-capture.webm`, `public/*`,
+`output/final.mp4` — regardless of which step-list file produced them.
+Running a second demo before moving the first's `output/final.mp4` out
+overwrites it, and interleaved runs can mix one demo's audio with another's
+footage. Today this is single-demo-at-a-time by convention only (see
+README).
+
+Planned fix: derive a slug from the step-list filename (or `meta.title`) and
+namespace every intermediate path by it — `audio/<slug>/`,
+`output/<slug>/timing.json`, `output/<slug>/raw-capture.webm`,
+`output/<slug>/final.mp4`. The one complication: `remotion/src/Composition.tsx`
+and `remotion/src/Root.tsx` currently `import timing from
+"../../output/timing.json"` as a **static** import, which can't take a
+runtime-selected path. Fixing that means switching to Remotion's dynamic
+props mechanism (`calculateMetadata` / the CLI's `--props` flag) instead of
+a static JSON import — arguably the more correct approach anyway, and worth
+doing as part of this change rather than working around the static import.
