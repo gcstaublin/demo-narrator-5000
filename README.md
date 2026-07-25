@@ -46,6 +46,7 @@ Output lands in `output/final.mp4`.
 - `scripts/tts.ts` — narration generation + timing measurement.
 - `scripts/capture.ts` — Playwright runner, paced to narration timing.
 - `remotion/` — compositing project; imports the *real* captured video as background.
+- `public/` — gitignored; staged by `scripts/prepare-assets.sh` right before rendering (Remotion serves static assets from here, at the project root).
 - `auth/` — one-time login scripts to produce storageState files (gitignored output).
 
 ## Current status

@@ -3,5 +3,6 @@ node_modules/
 auth/*.storageState.json
 output/
 audio/
-remotion/public/
+/public/
 *.log
+.DS_Store

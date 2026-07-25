@@ -6,8 +6,9 @@ const FPS = 30;
 /**
  * This composition does NOT recreate any UI. The background is the actual
  * Playwright recording of the real app (output/raw-capture.webm, converted
- * to mp4 before rendering — see scripts/prepare-assets.sh). Remotion's job
- * here is purely compositing: real footage + voiceover + music + captions.
+ * to mp4 and staged in public/ before rendering — see
+ * scripts/prepare-assets.sh). Remotion's job here is purely compositing:
+ * real footage + voiceover + music + captions.
  */
 export const DemoComposite: React.FC = () => {
   return (
