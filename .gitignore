@@ -12,7 +12,13 @@ assets/*.mp3
 assets/*.wav
 assets/*.m4a
 
-# local test renders and personal demo configs — not for the public repo
+# Local test renders and demo-specific configs/step lists — no demo is
+# committed to the public repo. Only the generic templates and the one
+# hand-written example stay tracked; every real demo is local-only, and
+# finished videos get shared externally (e.g. YouTube), not as repo assets.
 /local-renders/
-/config/grantland.json
-/steps/grantland-tour.json
+/config/*.json
+!/config/staging.json
+!/config/prod.json
+/steps/*.json
+!/steps/example-flow.json
