@@ -34,6 +34,20 @@ type Step = {
   postDelayMs?: number;
 };
 
+// A step's `path` is always relative to the app rooted at `baseUrl` — it
+// should extend baseUrl, never replace it. `new URL(path, baseUrl)` doesn't
+// do that: per the URL spec, a leading-slash path discards the *entire*
+// path of the base, keeping only its origin. That's invisible for a
+// bare-origin baseUrl (https://host) but silently sends every goto to the
+// wrong page for any app mounted under a subpath (https://host/app) — a
+// common setup for Java/.NET context-path deployments, path-based ingress
+// routing, and self-hosted enterprise tools (Jira, Confluence, etc).
+function resolveGotoUrl(baseUrl: string, path: string | undefined): string {
+  const trimmedBase = baseUrl.replace(/\/+$/, "");
+  const normalizedPath = (path ?? "/").replace(/^\/+/, "");
+  return new URL(normalizedPath ? `${trimmedBase}/${normalizedPath}` : trimmedBase).toString();
+}
+
 async function main() {
   const config = JSON.parse(
     fs.readFileSync(path.join("config", `${envName}.json`), "utf-8")
@@ -90,7 +104,7 @@ async function main() {
 
     switch (step.action) {
       case "goto":
-        await page.goto(new URL(step.path ?? "/", config.baseUrl).toString());
+        await page.goto(resolveGotoUrl(config.baseUrl, step.path));
         break;
       case "click":
         await page.click(step.selector!);
