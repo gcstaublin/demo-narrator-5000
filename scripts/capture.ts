@@ -51,6 +51,16 @@ async function main() {
     );
   }
 
+  // A step list's meta.viewport (resolved by tts.ts into timing.json) wins
+  // over the environment's default — viewport is a per-demo decision (this
+  // demo wants an iPhone-sized capture) more than an environment one (this
+  // env is normally viewed on desktop). Falling back to config.viewport
+  // keeps existing step lists working unchanged.
+  const viewport = timing?.viewport ?? config.viewport;
+  console.log(
+    `Viewport: ${viewport.width}x${viewport.height}${timing?.viewport ? "" : " (from config — set meta.viewport in the step list to override)"}`
+  );
+
   if (config.storageStatePath && !fs.existsSync(config.storageStatePath)) {
     console.error(
       `No storageState found at ${config.storageStatePath}. Run:\n` +
@@ -65,8 +75,8 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
     storageState: config.storageStatePath ?? undefined,
-    viewport: config.viewport,
-    recordVideo: { dir: "output/video-tmp", size: config.viewport },
+    viewport,
+    recordVideo: { dir: "output/video-tmp", size: viewport },
   });
   const page = await context.newPage();
 
@@ -92,7 +102,7 @@ async function main() {
         await page.waitForTimeout(step.ms ?? 500);
         break;
       case "scroll": {
-        const vp = page.viewportSize() ?? config.viewport;
+        const vp = page.viewportSize() ?? viewport;
         const x = step.x ?? Math.round(vp.width * 0.3);
         const y = step.y ?? Math.round(vp.height * 0.5);
         await page.mouse.move(x, y);
@@ -152,6 +162,15 @@ async function main() {
     "output/raw-capture.webm"
   );
   fs.rmSync("output/video-tmp", { recursive: true, force: true });
+
+  // Persist the viewport that was actually used back into timing.json so
+  // Root.tsx can size the Remotion composition to match the real recording
+  // instead of guessing — this is the resolved value (step list override or
+  // config default), not just whatever the step list happened to say.
+  fs.writeFileSync(
+    timingPath,
+    JSON.stringify({ ...(timing ?? { totalDurationSec: 0, steps: [] }), viewport }, null, 2)
+  );
 
   console.log("Saved output/raw-capture.webm");
 }
