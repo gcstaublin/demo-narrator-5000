@@ -20,5 +20,10 @@ assets/*.m4a
 /config/*.json
 !/config/staging.json
 !/config/prod.json
+# Public, no-login QA/test-automation practice sites — generic reusable
+# fixtures for stress-testing this tool, not personal demo content.
+!/config/saucedemo.json
+!/config/the-internet.json
+!/config/demoqa.json
 /steps/*.json
 !/steps/example-flow.json
