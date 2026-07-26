@@ -49,7 +49,7 @@ if (!apiKey || apiKey.startsWith("REPLACE_WITH_") || apiKey === "sk-...") {
 // like the site-transition-latency bug this replaced.
 const DEFAULT_GAP_MS = 400;
 const OPENAI_TTS_MODEL = "gpt-4o-mini-tts";
-const OPENAI_VOICE = "alloy"; // swap for any supported voice
+const DEFAULT_VOICE = "alloy"; // used when a step list doesn't set meta.voice
 
 type Step = {
   id: string;
@@ -59,7 +59,17 @@ type Step = {
   [key: string]: unknown;
 };
 
-async function synthesize(text: string, outPath: string) {
+type Meta = {
+  title?: string;
+  env?: string;
+  startPath?: string;
+  voice?: string;
+  viewport?: { width: number; height: number };
+  musicPath?: string;
+  [key: string]: unknown;
+};
+
+async function synthesize(text: string, outPath: string, voice: string) {
   const res = await fetch("https://api.openai.com/v1/audio/speech", {
     method: "POST",
     headers: {
@@ -68,7 +78,7 @@ async function synthesize(text: string, outPath: string) {
     },
     body: JSON.stringify({
       model: OPENAI_TTS_MODEL,
-      voice: OPENAI_VOICE,
+      voice,
       input: text,
       response_format: "mp3",
     }),
@@ -100,6 +110,10 @@ function getDurationSeconds(filePath: string): number {
 async function main() {
   const data = JSON.parse(fs.readFileSync(STEP_FILE, "utf-8"));
   const steps: Step[] = data.steps;
+  const meta: Meta = data.meta ?? {};
+  const voice = meta.voice ?? DEFAULT_VOICE;
+
+  console.log(`Voice: ${voice}${meta.voice ? "" : " (default — set meta.voice in the step list to override)"}`);
 
   fs.mkdirSync("audio", { recursive: true });
   fs.mkdirSync("output", { recursive: true });
@@ -146,7 +160,7 @@ async function main() {
 
     const clipPath = path.join("audio", `${step.id}.mp3`);
     console.log(`Synthesizing ${step.id}: "${step.narration}"`);
-    await synthesize(step.narration, clipPath);
+    await synthesize(step.narration, clipPath, voice);
 
     const duration = getDurationSeconds(clipPath);
 
@@ -173,9 +187,23 @@ async function main() {
     `ffmpeg -y -f concat -safe 0 -i "${concatListPath}" -c copy audio/narration-track.mp3`
   );
 
+  // viewport and musicPath are resolved here (not read directly by capture.ts
+  // or prepare-assets.sh from the step list) so there's one place downstream
+  // scripts look for "what this demo actually asked for" — same reasoning as
+  // the per-step timing budget above.
   fs.writeFileSync(
     "output/timing.json",
-    JSON.stringify({ totalDurationSec: cursor, steps: timing }, null, 2)
+    JSON.stringify(
+      {
+        totalDurationSec: cursor,
+        voice,
+        viewport: meta.viewport,
+        musicPath: meta.musicPath,
+        steps: timing,
+      },
+      null,
+      2
+    )
   );
 
   console.log(`\nDone. Total narration length: ${cursor.toFixed(1)}s`);

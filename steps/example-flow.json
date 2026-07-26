@@ -2,7 +2,10 @@
   "meta": {
     "title": "Creating a project and inviting a teammate",
     "env": "staging",
-    "startPath": "/dashboard"
+    "startPath": "/dashboard",
+    "voice": "alloy",
+    "viewport": { "width": 1440, "height": 900 },
+    "musicPath": "assets/music-track.mp3"
   },
   "steps": [
     {

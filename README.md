@@ -71,6 +71,28 @@ narration clip's length already provides.
 `config/<env>.json`'s `storageStatePath` is optional — omit it (or leave it
 `null`) for public pages that don't need a login session.
 
+### Per-demo config (`meta`)
+
+A step list's `meta` object can set config for that specific demo. These are
+resolved once by `npm run tts` and written into `output/timing.json`, which
+`capture.ts`, `prepare-assets.sh`, and the Remotion composition all read from
+— so there's one place downstream steps look for "what this demo actually
+asked for," instead of duplicated or hardcoded values that can drift out of
+sync with each other.
+
+| field        | fallback when omitted                              |
+|--------------|-----------------------------------------------------|
+| `voice`      | `alloy` — any OpenAI TTS voice name |
+| `viewport`   | the env's `config/<env>.json` viewport | 
+| `musicPath`  | auto-detects a single `.mp3`/`.wav`/`.m4a` in `assets/`, or silence if none |
+
+Viewport is a per-demo decision more than a per-environment one — the same
+staging environment might back both a desktop demo and a phone-sized one —
+so `meta.viewport` wins over the environment default when both are set.
+`capture.ts` also writes back whichever viewport it actually used, so the
+Remotion composition is always sized to match the real recording rather than
+a value that has to be kept in sync by hand.
+
 ## Directory guide
 
 - `config/` — per-environment settings (base URL, storageState path). No secrets committed.
