@@ -65,7 +65,10 @@ type Meta = {
   startPath?: string;
   voice?: string;
   viewport?: { width: number; height: number };
-  musicPath?: string;
+  // undefined (key omitted) -> auto-detect a track in assets/
+  // null (key explicitly set) -> no music, don't auto-detect either
+  // string -> use that exact file
+  musicPath?: string | null;
   [key: string]: unknown;
 };
 

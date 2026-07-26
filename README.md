@@ -89,6 +89,14 @@ sync with each other.
 Viewport is a per-demo decision more than a per-environment one — the same
 staging environment might back both a desktop demo and a phone-sized one —
 so `meta.viewport` wins over the environment default when both are set.
+
+`musicPath` has three distinct states, useful if `assets/` holds more than
+one track (say, `chill.mp3` and `techno.mp3` for different demos):
+- **omitted** — auto-detect a single track in `assets/`
+- **set to a path**, e.g. `"assets/chill.mp3"` — use that exact file
+- **set to `null`** — explicitly no music for this demo, silence, and
+  skip auto-detection (so having other demos' tracks sitting in `assets/`
+  doesn't accidentally pull one in)
 `capture.ts` also writes back whichever viewport it actually used, so the
 Remotion composition is always sized to match the real recording rather than
 a value that has to be kept in sync by hand.
