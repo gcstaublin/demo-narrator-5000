@@ -1,11 +1,11 @@
 {
-  "name": "demonarrator5000",
+  "name": "demo-narrator-5000",
   "version": "0.1.0",
   "description": "Turns a plain-English step list into a narrated demo video of your actual product UI, using Playwright capture + OpenAI TTS + Remotion compositing.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gcstaublin/demonarrator5000.git"
+    "url": "git+https://github.com/gcstaublin/demo-narrator-5000.git"
   },
   "private": true,
   "type": "module",

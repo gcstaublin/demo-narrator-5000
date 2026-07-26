@@ -1,4 +1,4 @@
-# demonarrator5000
+# demo-narrator-5000
 
 Turns a plain-English "step list" into a narrated, branded demo video of your
 *actual* product UI — no synthetic recreation, no manual screen recording.
