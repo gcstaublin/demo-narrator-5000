@@ -1,6 +1,7 @@
 node_modules/
 .env
 auth/*.storageState.json
+auth/*.sessionStorage.json
 output/
 audio/
 /public/
