@@ -98,6 +98,14 @@ async function main() {
     (timing?.steps ?? []).map((t: any) => [t.id, t])
   );
 
+  // Narration timing sets a *floor* for each step's on-screen time, not a
+  // ceiling — a `wait` step's own `ms` can (and for something like "wait up
+  // to 2 minutes for a reply" deliberately does) run far longer than its
+  // narration budget. Track real wall-clock time across the whole capture so
+  // Root.tsx can size the composition to what actually happened instead of
+  // silently truncating to the narration track's length.
+  const captureStart = Date.now();
+
   for (const step of steps) {
     console.log(`Executing ${step.id}: ${step.action}`);
     const actionStart = Date.now();
@@ -177,13 +185,19 @@ async function main() {
   );
   fs.rmSync("output/video-tmp", { recursive: true, force: true });
 
-  // Persist the viewport that was actually used back into timing.json so
-  // Root.tsx can size the Remotion composition to match the real recording
-  // instead of guessing — this is the resolved value (step list override or
-  // config default), not just whatever the step list happened to say.
+  const actualDurationSec = (Date.now() - captureStart) / 1000;
+
+  // Persist the viewport and real elapsed capture time back into
+  // timing.json so Root.tsx can size the Remotion composition to match the
+  // actual recording instead of guessing — these are the resolved/observed
+  // values, not just whatever the step list or narration timing predicted.
   fs.writeFileSync(
     timingPath,
-    JSON.stringify({ ...(timing ?? { totalDurationSec: 0, steps: [] }), viewport }, null, 2)
+    JSON.stringify(
+      { ...(timing ?? { totalDurationSec: 0, steps: [] }), viewport, actualDurationSec },
+      null,
+      2
+    )
   );
 
   console.log("Saved output/raw-capture.webm");
