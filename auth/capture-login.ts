@@ -39,7 +39,23 @@ async function main() {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   await page.context().storageState({ path: outPath });
 
+  // Playwright's storageState() only persists cookies + localStorage — it
+  // has no concept of sessionStorage. Some auth SDKs (e.g. Okta's embedded
+  // widget, as used by this app) keep the actual access/ID tokens in
+  // sessionStorage instead, which means storageState() alone silently
+  // captures a session-less file. Snapshot sessionStorage separately so
+  // capture.ts can replay it into every new page via addInitScript.
+  const sessionStorageDump: Record<string, string> = await page.evaluate(() =>
+    Object.keys(window.sessionStorage).reduce((acc, key) => {
+      acc[key] = window.sessionStorage.getItem(key) ?? "";
+      return acc;
+    }, {} as Record<string, string>)
+  );
+  const sessionStoragePath = outPath.replace(/\.json$/, ".sessionStorage.json");
+  fs.writeFileSync(sessionStoragePath, JSON.stringify(sessionStorageDump, null, 2));
+
   console.log(`Saved session to ${outPath}`);
+  console.log(`Saved sessionStorage to ${sessionStoragePath}`);
   await browser.close();
   process.exit(0);
 }

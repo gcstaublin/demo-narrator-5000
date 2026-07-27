@@ -92,6 +92,28 @@ async function main() {
     viewport,
     recordVideo: { dir: "output/video-tmp", size: viewport },
   });
+
+  // storageState only covers cookies + localStorage. Auth SDKs that keep
+  // tokens in sessionStorage (e.g. this app's embedded Okta widget) need
+  // that replayed too, or every page load looks logged-out. See the
+  // matching capture note in auth/capture-login.ts.
+  if (config.storageStatePath) {
+    const sessionStoragePath = (config.storageStatePath as string).replace(
+      /\.json$/,
+      ".sessionStorage.json"
+    );
+    if (fs.existsSync(sessionStoragePath)) {
+      const sessionStorageDump = JSON.parse(
+        fs.readFileSync(sessionStoragePath, "utf-8")
+      );
+      await context.addInitScript((dump: Record<string, string>) => {
+        for (const [key, value] of Object.entries(dump)) {
+          window.sessionStorage.setItem(key, value);
+        }
+      }, sessionStorageDump);
+    }
+  }
+
   const page = await context.newPage();
 
   const timingById = new Map(
