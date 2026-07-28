@@ -87,10 +87,32 @@ async function main() {
   fs.mkdirSync("output/video-tmp", { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
+
+  // Playwright's default UA advertises itself as headless/automated (e.g.
+  // "HeadlessChrome"), which some target apps' client-side browser-detection
+  // flags as unsupported mid-session — see issue #6. Build a default that
+  // looks like a real desktop Chrome by taking the real bundled Chromium
+  // version (so it never goes stale) and dropping the "Headless" tell,
+  // rather than hardcoding a version string that would drift out of date.
+  const chromeVersion = browser.version();
+  const defaultUserAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
+  // meta.userAgent (resolved into timing.json by tts.ts) wins over the env's
+  // default, same precedence as viewport — a per-demo decision beats a
+  // per-environment one.
+  const userAgent = timing?.userAgent ?? config.userAgent ?? defaultUserAgent;
+  console.log(
+    `User-Agent: ${userAgent}${
+      timing?.userAgent ?? config.userAgent
+        ? ""
+        : " (default desktop Chrome UA — set meta.userAgent or config.userAgent to override)"
+    }`
+  );
+
   const context = await browser.newContext({
     storageState: config.storageStatePath ?? undefined,
     viewport,
     recordVideo: { dir: "output/video-tmp", size: viewport },
+    userAgent,
   });
 
   // storageState only covers cookies + localStorage. Auth SDKs that keep
