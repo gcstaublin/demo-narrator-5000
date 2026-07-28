@@ -6,6 +6,29 @@ Turns a plain-English "step list" into a narrated, branded demo video of your
 Pipeline: **step list → TTS narration + timing → Playwright capture (paced to
 narration) → Remotion composite (real footage + voiceover + music + captions) → MP4**
 
+## How it works
+
+You provide a target URL, a list of actions to run against it (click here,
+type this, scroll there), and a line of narration for each one describing
+what's happening. From there:
+
+1. **Narration comes first.** Each step's narration text is sent to OpenAI's
+   TTS API, which generates a spoken audio clip for it. Every clip is timed
+   — a five-second sentence gets a five-second budget — and those timings
+   become the schedule the rest of the pipeline follows.
+2. **Playwright drives the real app.** A headless Chromium browser opens
+   your actual product — not a mockup or recreation — and performs each
+   step for real (clicking, typing, scrolling, navigating) while recording
+   the screen. Each action is paced to last as long as its narration clip,
+   so a step with a longer explanation gets more on-screen dwell time and a
+   quick aside gets less.
+3. **Remotion assembles the final video.** The raw screen recording, the
+   narration voiceover, optional background music, and captions (derived
+   from the same narration timing) are composited together into one MP4.
+
+The result is a narrated, captioned demo of your actual product, without
+anyone manually recording a screen or hand-timing a voiceover to it.
+
 ## Prerequisites / setup checklist
 
 - [ ] Node.js 18+
