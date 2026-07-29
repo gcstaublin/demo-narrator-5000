@@ -108,6 +108,7 @@ sync with each other.
 | `voice`      | `alloy` — any OpenAI TTS voice name |
 | `viewport`   | the env's `config/<env>.json` viewport | 
 | `musicPath`  | auto-detects a single `.mp3`/`.wav`/`.m4a` in `assets/`, or silence if none |
+| `userAgent`  | the env's `config/<env>.json` `userAgent`, or a real desktop Chrome UA (built from the actual bundled Chromium version, not a hardcoded string) |
 
 Viewport is a per-demo decision more than a per-environment one — the same
 staging environment might back both a desktop demo and a phone-sized one —
@@ -123,6 +124,12 @@ one track (say, `chill.mp3` and `techno.mp3` for different demos):
 `capture.ts` also writes back whichever viewport it actually used, so the
 Remotion composition is always sized to match the real recording rather than
 a value that has to be kept in sync by hand.
+
+By default Playwright's Chromium reports an automated/headless User-Agent,
+which some target apps' client-side browser-detection flags as unsupported
+mid-recording — set `meta.userAgent` (or `userAgent` in `config/<env>.json`
+for an env-wide default) to override it with a specific UA string if the
+built-in desktop Chrome default still gets flagged.
 
 ## Directory guide
 

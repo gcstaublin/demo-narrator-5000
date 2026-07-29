@@ -69,6 +69,7 @@ type Meta = {
   // null (key explicitly set) -> no music, don't auto-detect either
   // string -> use that exact file
   musicPath?: string | null;
+  userAgent?: string;
   [key: string]: unknown;
 };
 
@@ -202,6 +203,7 @@ async function main() {
         voice,
         viewport: meta.viewport,
         musicPath: meta.musicPath,
+        userAgent: meta.userAgent,
         steps: timing,
       },
       null,
