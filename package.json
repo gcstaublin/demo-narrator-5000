@@ -10,6 +10,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "preview": "tsx scripts/preview-script.ts",
     "tts": "tsx scripts/tts.ts",
     "capture": "tsx scripts/capture.ts",
     "prepare-assets": "bash scripts/prepare-assets.sh",

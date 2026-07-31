@@ -77,6 +77,10 @@ type Meta = {
   padding?: number;
   cornerRadius?: number;
   shadow?: boolean;
+  // Burned-in captions under the footage, timed off the same per-step
+  // narration windows as the audio. Off by default — see README.md's
+  // meta table.
+  captions?: boolean;
   [key: string]: unknown;
 };
 
@@ -215,6 +219,7 @@ async function main() {
         padding: meta.padding,
         cornerRadius: meta.cornerRadius,
         shadow: meta.shadow,
+        captions: meta.captions ?? false,
         steps: timing,
       },
       null,
