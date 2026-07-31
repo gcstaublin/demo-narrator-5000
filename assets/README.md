@@ -13,3 +13,8 @@ Optional user-supplied assets go here.
     more than one).
   - If neither is found, it generates silence as a placeholder so the
     pipeline still runs.
+- A background image for the composited frame, if you want a photo/texture
+  behind the footage instead of the built-in gradient or a plain CSS color.
+  Unlike music, there's no auto-detection — set `meta.background` in the
+  step list to the file's path explicitly (see README.md). Gitignored,
+  same as music — bring your own.

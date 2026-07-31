@@ -70,6 +70,13 @@ type Meta = {
   // string -> use that exact file
   musicPath?: string | null;
   userAgent?: string;
+  // Screen-Studio-style frame around the real footage — see
+  // remotion/src/Composition.tsx and README.md's meta table for the
+  // resolution rules (omitted / CSS string / file path).
+  background?: string;
+  padding?: number;
+  cornerRadius?: number;
+  shadow?: boolean;
   [key: string]: unknown;
 };
 
@@ -204,6 +211,10 @@ async function main() {
         viewport: meta.viewport,
         musicPath: meta.musicPath,
         userAgent: meta.userAgent,
+        background: meta.background,
+        padding: meta.padding,
+        cornerRadius: meta.cornerRadius,
+        shadow: meta.shadow,
         steps: timing,
       },
       null,

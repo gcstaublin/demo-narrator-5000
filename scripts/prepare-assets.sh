@@ -63,4 +63,35 @@ else
   fi
 fi
 
+# meta.background (resolved by tts.ts into timing.json) is a single string
+# with three meanings, mirroring meta.musicPath's resolution above:
+#   - key absent, or set but not an existing file -> treated as a CSS value
+#     (or the composition's own default) by Composition.tsx directly; no
+#     staging needed
+#   - set to a path that exists on disk -> stage it as an image and flip
+#     backgroundImageStaged so Composition.tsx knows to render it
+# Composition.tsx can't do this file-existence check itself — it renders
+# inside headless Chromium, not Node — so the decision is made once, here,
+# and written back into timing.json.
+BACKGROUND_IMAGE_STAGED="false"
+if [ -f output/timing.json ]; then
+  BG_PATH=$(node -e "
+    const fs = require('fs');
+    const t = require('./output/timing.json');
+    if (t.background && fs.existsSync(t.background)) process.stdout.write(t.background);
+  ")
+  if [ -n "$BG_PATH" ]; then
+    echo "Using background image from meta.background: ${BG_PATH}"
+    ffmpeg -y -i "$BG_PATH" public/background.png
+    BACKGROUND_IMAGE_STAGED="true"
+  fi
+
+  node -e "
+    const fs = require('fs');
+    const t = require('./output/timing.json');
+    t.backgroundImageStaged = ${BACKGROUND_IMAGE_STAGED};
+    fs.writeFileSync('output/timing.json', JSON.stringify(t, null, 2));
+  "
+fi
+
 echo "Assets staged in public/"

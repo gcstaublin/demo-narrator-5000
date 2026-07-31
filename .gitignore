@@ -13,6 +13,11 @@ assets/*.mp3
 assets/*.wav
 assets/*.m4a
 
+# your own background image for the composited frame — bring-your-own
+assets/*.png
+assets/*.jpg
+assets/*.jpeg
+
 # Local test renders and demo-specific configs/step lists — no demo is
 # committed to the public repo. Only the generic templates and the one
 # hand-written example stay tracked; every real demo is local-only, and
