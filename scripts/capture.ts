@@ -58,6 +58,24 @@ async function main() {
   let timing: any = null;
   const timingPath = "output/timing.json";
   if (fs.existsSync(timingPath)) {
+    // If the step list was edited (narration text, timing-affecting fields)
+    // after the last `npm run tts` run, output/timing.json reflects the
+    // pre-edit script — capturing against it would pace this recording to
+    // narration lengths that no longer match. Refuse rather than silently
+    // producing a desynced capture; this only compares the exact step file
+    // passed on this command line against the single global timing.json, so
+    // it doesn't catch switching between two different demos' step lists
+    // (see README's "one demo at a time" caveat) — just edits to this one.
+    const stepMtime = fs.statSync(stepFile).mtimeMs;
+    const timingMtime = fs.statSync(timingPath).mtimeMs;
+    if (stepMtime > timingMtime) {
+      console.error(
+        `${stepFile} has been modified since output/timing.json was generated. ` +
+          `Run \`npm run tts -- ${stepFile}\` again before capturing, so narration ` +
+          `audio and pacing match the current step list.`
+      );
+      process.exit(1);
+    }
     timing = JSON.parse(fs.readFileSync(timingPath, "utf-8"));
   } else {
     console.warn(
