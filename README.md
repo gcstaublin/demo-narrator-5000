@@ -6,6 +6,8 @@ Turns a plain-English "step list" into a narrated, branded demo video of your
 Pipeline: **step list → TTS narration + timing → Playwright capture (paced to
 narration) → Remotion composite (real footage + voiceover + music + captions) → MP4**
 
+[![Watch a narrated demo](docs/demo-thumbnail.jpg)](https://youtu.be/CtXkCjxnsFs)
+
 ## How it works
 
 You provide a target URL, a list of actions to run against it (click here,
