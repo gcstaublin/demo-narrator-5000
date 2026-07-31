@@ -109,6 +109,19 @@ sync with each other.
 | `viewport`   | the env's `config/<env>.json` viewport | 
 | `musicPath`  | auto-detects a single `.mp3`/`.wav`/`.m4a` in `assets/`, or silence if none |
 | `userAgent`  | the env's `config/<env>.json` `userAgent`, or a real desktop Chrome UA (built from the actual bundled Chromium version, not a hardcoded string) |
+| `background` | a built-in dark gradient |
+| `padding`    | `96` (px inset around the footage on the output canvas) |
+| `cornerRadius` | `12` (px, on the footage's corners) |
+| `shadow`     | `true` (drop shadow under the footage) |
+
+The final video is always rendered onto a fixed 1920x1080 canvas,
+regardless of the captured viewport — the real footage is scaled (never
+cropped) to fit inside that canvas minus `padding` on each side, so it
+reads as a produced demo with room around it rather than a raw full-bleed
+screen recording. `background` accepts three kinds of value: omitted (uses
+the built-in gradient), a CSS color/gradient string (e.g. `"#101820"` or
+`"linear-gradient(...)"`), or a path to an image file on disk, which gets
+staged into the render behind the footage.
 
 Viewport is a per-demo decision more than a per-environment one — the same
 staging environment might back both a desktop demo and a phone-sized one —

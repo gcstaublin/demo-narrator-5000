@@ -17,12 +17,13 @@ const effectiveDurationSec = Math.max(
 );
 const durationInFrames = Math.ceil((effectiveDurationSec + 1) * FPS);
 
-// capture.ts writes back the viewport it actually recorded at — this is a
-// fallback only for timing.json files produced before that existed.
-const FALLBACK_WIDTH = 1440;
-const FALLBACK_HEIGHT = 900;
-const width = (timing as any).viewport?.width ?? FALLBACK_WIDTH;
-const height = (timing as any).viewport?.height ?? FALLBACK_HEIGHT;
+// Must match Composition.tsx's CANVAS_WIDTH/CANVAS_HEIGHT — duplicated
+// rather than shared, matching this repo's existing convention of
+// duplicating small constants (e.g. FPS) across the two composition files.
+// The output canvas is fixed regardless of the captured viewport;
+// Composition.tsx scales the real footage to fit inside it with padding.
+const CANVAS_WIDTH = 1920;
+const CANVAS_HEIGHT = 1080;
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -31,8 +32,8 @@ export const RemotionRoot: React.FC = () => {
       component={DemoComposite}
       durationInFrames={durationInFrames}
       fps={FPS}
-      width={width}
-      height={height}
+      width={CANVAS_WIDTH}
+      height={CANVAS_HEIGHT}
     />
   );
 };
