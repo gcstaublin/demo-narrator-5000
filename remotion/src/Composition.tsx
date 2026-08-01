@@ -187,10 +187,22 @@ const TitleCard: React.FC<{
       }}
     >
       {logoStaged && (
-        <Img
-          src={staticFile("logo.png")}
-          style={{ maxWidth: 96, maxHeight: 96, marginBottom: 28, objectFit: "contain" }}
-        />
+        <div
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: "50%",
+            overflow: "hidden",
+            marginBottom: 28,
+            border: "2px solid rgba(245, 245, 243, 0.35)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
+          }}
+        >
+          <Img
+            src={staticFile("logo.png")}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
       )}
       <div
         style={{
