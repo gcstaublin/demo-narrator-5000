@@ -107,4 +107,31 @@ if [ -f output/timing.json ]; then
   "
 fi
 
+# meta.logoPath (resolved by tts.ts into timing.json), shown on the
+# intro/outro title cards. Explicit-path-only, unlike meta.background —
+# no CSS-string alternative, so there's nothing to fall back to besides
+# "no logo." Same reasoning as meta.background for why staging happens
+# here rather than in Composition.tsx: that renders inside headless
+# Chromium, not Node, so it can't check file existence itself.
+LOGO_STAGED="false"
+if [ -f output/timing.json ]; then
+  LOGO_PATH=$(node -e "
+    const fs = require('fs');
+    const t = require('./output/timing.json');
+    if (t.logoPath && fs.existsSync(t.logoPath)) process.stdout.write(t.logoPath);
+  ")
+  if [ -n "$LOGO_PATH" ]; then
+    echo "Using logo from meta.logoPath: ${LOGO_PATH}"
+    ffmpeg -y -i "$LOGO_PATH" public/logo.png
+    LOGO_STAGED="true"
+  fi
+
+  node -e "
+    const fs = require('fs');
+    const t = require('./output/timing.json');
+    t.logoStaged = ${LOGO_STAGED};
+    fs.writeFileSync('output/timing.json', JSON.stringify(t, null, 2));
+  "
+fi
+
 echo "Assets staged in public/"

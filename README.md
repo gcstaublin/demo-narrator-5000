@@ -125,6 +125,10 @@ sync with each other.
 | `cornerRadius` | `12` (px, on the footage's corners) |
 | `shadow`     | `true` (drop shadow under the footage) |
 | `captions`   | `false` — burned-in on-screen captions, timed off each step's narration window |
+| `introTitle` / `introSubtitle` | no intro card — set `introTitle` to add one (subtitle is optional) |
+| `outroTitle` / `outroSubtitle` | no outro card — set `outroTitle` to add one (subtitle is optional) |
+| `introDurationSec` / `outroDurationSec` | `3` (seconds) — only applies if the matching card is shown |
+| `logoPath`   | no logo — a path to an image file, shown above the title on both cards if set |
 
 The final video is always rendered onto a fixed 1920x1080 canvas,
 regardless of the captured viewport — the real footage is scaled (never
@@ -149,6 +153,19 @@ one track (say, `chill.mp3` and `techno.mp3` for different demos):
 `capture.ts` also writes back whichever viewport it actually used, so the
 Remotion composition is always sized to match the real recording rather than
 a value that has to be kept in sync by hand.
+
+`introTitle`/`outroTitle` each independently gate a full-screen title card
+(centered title + optional subtitle, fading in with a slight scale-up over
+the card's first ~0.7s, then holding) shown before/after the captured demo
+— setting one doesn't imply the other. Both share `logoPath` (an image
+shown above the title on whichever card(s) are active) and default to a
+3s hold, overridable per-card via `introDurationSec`/`outroDurationSec`.
+Unlike `musicPath`, `logoPath` is explicit-path-only — it won't auto-detect
+an image sitting in `assets/`, since accidentally picking the wrong image
+as a logo is a lot more visible than picking the wrong background track.
+Note that `title` (used only as a label in `npm run preview`'s header) is
+a different field — `introTitle` does not fall back to it, so setting
+`title` alone never adds an intro card.
 
 By default Playwright's Chromium reports an automated/headless User-Agent,
 which some target apps' client-side browser-detection flags as unsupported

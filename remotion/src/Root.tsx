@@ -15,7 +15,15 @@ const effectiveDurationSec = Math.max(
   timing.totalDurationSec,
   (timing as any).actualDurationSec ?? 0
 );
-const durationInFrames = Math.ceil((effectiveDurationSec + 1) * FPS);
+// Intro/outro title cards (tts.ts's meta.introTitle/outroTitle) extend the
+// composition beyond the captured demo itself — 0 when a card isn't set,
+// see Composition.tsx for how these same two fields gate whether the card
+// renders at all.
+const introDurationSec = (timing as any).introDurationSec ?? 0;
+const outroDurationSec = (timing as any).outroDurationSec ?? 0;
+const durationInFrames = Math.ceil(
+  (effectiveDurationSec + 1 + introDurationSec + outroDurationSec) * FPS
+);
 
 // Must match Composition.tsx's CANVAS_WIDTH/CANVAS_HEIGHT — duplicated
 // rather than shared, matching this repo's existing convention of
