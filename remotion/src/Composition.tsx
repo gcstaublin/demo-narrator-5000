@@ -67,6 +67,20 @@ export const DemoComposite: React.FC = () => {
     durationInFrames - introFrames - outroFrames
   );
 
+  // Playwright's clicks/fills never move a visible pointer, so capture.ts
+  // records where each click/fill target sat (viewport coordinates) into
+  // its timing entry — see the matching capture note there. Steps with no
+  // recorded target (goto, wait, scroll) are skipped; the cursor simply
+  // holds its last position across them.
+  const cursorTargets: CursorTarget[] = ((timing as any).steps ?? [])
+    .filter((s: any) => typeof s.cursorX === "number" && typeof s.cursorY === "number")
+    .map((s: any) => ({
+      startSec: s.startSec,
+      x: s.cursorX,
+      y: s.cursorY,
+      isClick: s.cursorAction === "click",
+    }));
+
   const availableWidth = CANVAS_WIDTH - padding * 2;
   const availableHeight = CANVAS_HEIGHT - padding * 2;
   const scale = Math.min(
@@ -127,6 +141,8 @@ export const DemoComposite: React.FC = () => {
         </div>
 
         <Audio src={staticFile("narration-track.mp3")} />
+
+        <CursorOverlay targets={cursorTargets} scale={scale} left={left} top={top} />
 
         {showCaptions &&
           timing.steps
@@ -231,6 +247,121 @@ const TitleCard: React.FC<{
           {subtitle}
         </div>
       )}
+    </AbsoluteFill>
+  );
+};
+
+type CursorTarget = { startSec: number; x: number; y: number; isClick: boolean };
+
+// How long the cursor takes to glide between two consecutive targets, and
+// how long a click's ripple takes to expand and fade. Both are tuned by
+// feel, not derived from anything in timing.json.
+const CURSOR_TRAVEL_SEC = 0.45;
+const CLICK_RIPPLE_SEC = 0.55;
+const CURSOR_FADE_SEC = 0.3;
+
+const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
+const easeInOutCubic = (p: number) =>
+  p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+// Draws a synthetic pointer that eases between each real click/fill target
+// (in the gap before the next action fires) and holds through the action's
+// narration window, with a small ripple on clicks — since Playwright's
+// automated actions never move a visible cursor of their own, this is
+// wholly synthesized from the target points capture.ts records.
+const CursorOverlay: React.FC<{
+  targets: CursorTarget[];
+  scale: number;
+  left: number;
+  top: number;
+}> = ({ targets, scale, left, top }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const t = frame / fps;
+
+  if (targets.length === 0) return null;
+
+  const first = targets[0];
+  if (t < first.startSec - CURSOR_TRAVEL_SEC - CURSOR_FADE_SEC) return null;
+
+  // `prev` is the last target already reached by time t (or `first`, as a
+  // resting position before it's technically been "reached"); `next` is the
+  // upcoming target we may currently be traveling toward.
+  let prev = first;
+  let next: CursorTarget | null = null;
+  for (const target of targets) {
+    if (target.startSec <= t) {
+      prev = target;
+    } else {
+      next = target;
+      break;
+    }
+  }
+
+  let x = prev.x;
+  let y = prev.y;
+  if (next) {
+    const travelStart = Math.max(prev.startSec, next.startSec - CURSOR_TRAVEL_SEC);
+    if (t >= travelStart) {
+      const progress = Math.min(1, (t - travelStart) / Math.max(0.001, next.startSec - travelStart));
+      const eased = easeInOutCubic(progress);
+      x = lerp(prev.x, next.x, eased);
+      y = lerp(prev.y, next.y, eased);
+    }
+  }
+
+  const opacity = interpolate(
+    t,
+    [first.startSec - CURSOR_TRAVEL_SEC - CURSOR_FADE_SEC, first.startSec - CURSOR_TRAVEL_SEC],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+
+  const sinceClick = t - prev.startSec;
+  const showRipple = prev.isClick && sinceClick >= 0 && sinceClick < CLICK_RIPPLE_SEC;
+  const rippleProgress = showRipple ? sinceClick / CLICK_RIPPLE_SEC : 0;
+
+  const screenX = left + x * scale;
+  const screenY = top + y * scale;
+
+  return (
+    <AbsoluteFill style={{ pointerEvents: "none", opacity }}>
+      {showRipple && (
+        <div
+          style={{
+            position: "absolute",
+            left: screenX,
+            top: screenY,
+            width: 40,
+            height: 40,
+            marginLeft: -20,
+            marginTop: -20,
+            borderRadius: "50%",
+            border: "2px solid rgba(255, 255, 255, 0.85)",
+            transform: `scale(${lerp(0.3, 1.8, rippleProgress)})`,
+            opacity: lerp(0.8, 0, rippleProgress),
+          }}
+        />
+      )}
+      <svg
+        width={24}
+        height={28}
+        viewBox="0 0 24 28"
+        style={{
+          position: "absolute",
+          left: screenX - 3,
+          top: screenY - 2,
+          filter: "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5))",
+        }}
+      >
+        <path
+          d="M3 2 L3 20 L7.5 16 L11 25 L14.5 23.5 L11 15 L19 15 Z"
+          fill="#F5F5F3"
+          stroke="#111"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+      </svg>
     </AbsoluteFill>
   );
 };
