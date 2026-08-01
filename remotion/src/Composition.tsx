@@ -257,7 +257,7 @@ type CursorTarget = { startSec: number; x: number; y: number; isClick: boolean }
 // how long a click's ripple takes to expand and fade. Both are tuned by
 // feel, not derived from anything in timing.json.
 const CURSOR_TRAVEL_SEC = 0.45;
-const CLICK_RIPPLE_SEC = 0.55;
+const CLICK_RIPPLE_SEC = 0.65;
 const CURSOR_FADE_SEC = 0.3;
 
 const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
@@ -319,46 +319,94 @@ const CursorOverlay: React.FC<{
 
   const sinceClick = t - prev.startSec;
   const showRipple = prev.isClick && sinceClick >= 0 && sinceClick < CLICK_RIPPLE_SEC;
-  const rippleProgress = showRipple ? sinceClick / CLICK_RIPPLE_SEC : 0;
+  // Second ring trails the first slightly, so the pulse reads as an
+  // outward-radiating beacon rather than one flat expanding circle.
+  const RING_2_DELAY_SEC = 0.12;
+  const ring1Progress = showRipple ? sinceClick / CLICK_RIPPLE_SEC : 0;
+  const ring2Progress = showRipple
+    ? Math.max(0, sinceClick - RING_2_DELAY_SEC) / (CLICK_RIPPLE_SEC - RING_2_DELAY_SEC)
+    : 0;
+  const coreProgress = showRipple ? Math.min(1, sinceClick / (CLICK_RIPPLE_SEC * 0.4)) : 0;
 
   const screenX = left + x * scale;
   const screenY = top + y * scale;
 
+  // Warm accent so the beacon reads clearly against both light and dark
+  // captured UIs, distinct from the cursor's own neutral white/black.
+  const BEACON_COLOR = "255, 196, 77";
+
   return (
     <AbsoluteFill style={{ pointerEvents: "none", opacity }}>
       {showRipple && (
-        <div
-          style={{
-            position: "absolute",
-            left: screenX,
-            top: screenY,
-            width: 40,
-            height: 40,
-            marginLeft: -20,
-            marginTop: -20,
-            borderRadius: "50%",
-            border: "2px solid rgba(255, 255, 255, 0.85)",
-            transform: `scale(${lerp(0.3, 1.8, rippleProgress)})`,
-            opacity: lerp(0.8, 0, rippleProgress),
-          }}
-        />
+        <>
+          <div
+            style={{
+              position: "absolute",
+              left: screenX,
+              top: screenY,
+              width: 64,
+              height: 64,
+              marginLeft: -32,
+              marginTop: -32,
+              borderRadius: "50%",
+              border: `2.5px solid rgba(${BEACON_COLOR}, 0.9)`,
+              transform: `scale(${lerp(0.15, 1, ring1Progress)})`,
+              opacity: lerp(0.9, 0, ring1Progress),
+            }}
+          />
+          {ring2Progress > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                left: screenX,
+                top: screenY,
+                width: 64,
+                height: 64,
+                marginLeft: -32,
+                marginTop: -32,
+                borderRadius: "50%",
+                border: `2px solid rgba(${BEACON_COLOR}, 0.7)`,
+                transform: `scale(${lerp(0.15, 1, Math.min(1, ring2Progress))})`,
+                opacity: lerp(0.75, 0, Math.min(1, ring2Progress)),
+              }}
+            />
+          )}
+          <div
+            style={{
+              position: "absolute",
+              left: screenX,
+              top: screenY,
+              width: 20,
+              height: 20,
+              marginLeft: -10,
+              marginTop: -10,
+              borderRadius: "50%",
+              background: `rgba(${BEACON_COLOR}, 0.95)`,
+              boxShadow: `0 0 18px 5px rgba(${BEACON_COLOR}, 0.55)`,
+              transform: `scale(${lerp(0.4, 1.1, coreProgress)})`,
+              opacity: lerp(1, 0, coreProgress),
+            }}
+          />
+        </>
       )}
+      {/* A hand-tuned arrow silhouette (tip at the icon's 4,4) — the classic
+          lean/taper of a real OS pointer, not a symmetric dagger shape. */}
       <svg
         width={24}
-        height={28}
-        viewBox="0 0 24 28"
+        height={24}
+        viewBox="0 0 24 24"
         style={{
           position: "absolute",
-          left: screenX - 3,
-          top: screenY - 2,
+          left: screenX - 4,
+          top: screenY - 4,
           filter: "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5))",
         }}
       >
         <path
-          d="M3 2 L3 20 L7.5 16 L11 25 L14.5 23.5 L11 15 L19 15 Z"
+          d="M4 4 L11.07 21 L13.58 13.61 L21 11.07 Z"
           fill="#F5F5F3"
           stroke="#111"
-          strokeWidth="1.2"
+          strokeWidth="1.3"
           strokeLinejoin="round"
         />
       </svg>
