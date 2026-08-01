@@ -19,9 +19,6 @@ const DEFAULT_BACKGROUND =
 const FALLBACK_WIDTH = 1440;
 const FALLBACK_HEIGHT = 900;
 
-// Toggle burned-in captions on/off without deleting the caption code.
-const SHOW_CAPTIONS = false;
-
 /**
  * This composition does NOT recreate any UI. The foreground is the actual
  * Playwright recording of the real app (output/raw-capture.webm, converted
@@ -39,6 +36,9 @@ export const DemoComposite: React.FC = () => {
   const shadow = (timing as any).shadow ?? true;
   const backgroundImageStaged = (timing as any).backgroundImageStaged ?? false;
   const background = (timing as any).background;
+  // Resolved once by tts.ts into timing.json from meta.captions (default
+  // false) — see README.md's meta table and CLAUDE.md's demo Q&A checklist.
+  const showCaptions = (timing as any).captions ?? false;
 
   const availableWidth = CANVAS_WIDTH - padding * 2;
   const availableHeight = CANVAS_HEIGHT - padding * 2;
@@ -82,7 +82,7 @@ export const DemoComposite: React.FC = () => {
       {/* Background music, ducked well under narration volume */}
       <Audio src={staticFile("music-track.mp3")} volume={0.08} loop />
 
-      {SHOW_CAPTIONS &&
+      {showCaptions &&
         timing.steps
           .filter((s: any) => s.narration)
           .map((s: any) => (

@@ -6,6 +6,19 @@
 # staticFile().
 set -euo pipefail
 
+# If output/timing.json is newer than output/raw-capture.webm, `npm run tts`
+# ran again (a narration edit) after the last `npm run capture` — the
+# recorded footage was paced to the *previous* timing, so rendering it now
+# would pair mismatched audio/video. Refuse rather than produce a desynced
+# video; run capture again first.
+if [ -f output/timing.json ] && [ -f output/raw-capture.webm ] && \
+   [ output/timing.json -nt output/raw-capture.webm ]; then
+  echo "output/timing.json is newer than output/raw-capture.webm — narration" \
+       "was regenerated after the last capture. Run npm run capture again" \
+       "before rendering, so footage pacing matches the current narration." >&2
+  exit 1
+fi
+
 mkdir -p public
 
 ffmpeg -y -i output/raw-capture.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart public/raw-capture.mp4

@@ -4,8 +4,11 @@
 
 A "demo" here means writing a new `steps/*.json` step list (optionally
 paired with a new `config/*.json` environment). Before writing the first
-line of either, ask the user for these four things — don't default any of
-them silently:
+line of either, ask the user for these six things — don't default any of
+them silently. Most users driving this tool aren't developers and won't
+know these are configurable at all unless asked directly in plain
+language — don't rely on them knowing to dig into `meta` fields or
+README tables themselves.
 
 1. **Viewport.** Offer a few concrete presets (e.g. Desktop 1440x900,
    Laptop 1280x800, Mobile 390x844) rather than just picking one.
@@ -25,13 +28,61 @@ them silently:
    the user provides. Never assume silence or auto-detect without asking.
 4. **The actual test scenario.** Never invent the route/flow/steps
    yourself — ask what the user specifically wants demoed.
+5. **Captions.** Burned-in on-screen captions, on or off (`meta.captions`).
+   Default is `false` if the user doesn't care — but ask, don't silently
+   default.
+6. **Framing/presentation.** How much space and styling around the
+   browser footage (`meta.padding`, `meta.cornerRadius`, `meta.shadow`,
+   `meta.background`). Describe this visually, not as field names — offer
+   named presets rather than asking for pixel values:
+   - **Standard (default)** — comfortable inset with rounded corners and a
+     drop shadow, dark gradient background (`padding: 96`,
+     `cornerRadius: 12`, `shadow: true`).
+   - **Full-bleed / tight** — footage fills nearly the whole frame, square
+     corners, no shadow (`padding: 32`, `cornerRadius: 0`, `shadow:
+     false`).
+   - **Custom** — ask what they want changed (padding amount, corner
+     rounding, shadow on/off, background color/gradient/image path) and
+     set those fields directly rather than forcing them into a preset.
 
-All four map directly onto fields the tool already supports per-demo
-(`meta.viewport`, `meta.voice`, `meta.musicPath`, and the step list itself)
-— see README.md's "Per-demo config (meta)" section. The gap to avoid is
-conversational, not technical: the tool has always supported per-demo
-overrides; the failure mode is an agent picking values for the user
-instead of asking.
+All six map directly onto fields the tool already supports per-demo
+(`meta.viewport`, `meta.voice`, `meta.musicPath`, `meta.captions`,
+`meta.padding`/`cornerRadius`/`shadow`/`background`, and the step list
+itself) — see README.md's "Per-demo config (meta)" section. The gap to
+avoid is conversational, not technical: the tool has always supported
+per-demo overrides; the failure mode is an agent picking values for the
+user instead of asking.
+
+## Script review before the expensive steps
+
+Writing the step list is cheap; `npm run capture` (drives a real browser)
+and `npm run render` (Remotion composite) are not, in time if nothing
+else. After drafting or editing a `steps/*.json` file and before running
+`npm run tts`, `npm run capture`, or `npm run render`:
+
+1. Paste the full ordered narration — every step's action + narration line
+   — into the chat, or run `npm run preview -- steps/<file>.json` (reads
+   the step list only, makes no API calls, prints a shooting-script view
+   with a rough per-step and total duration estimate) and share that
+   output.
+2. Wait for explicit approval or edits before running any pipeline
+   command. Apply requested changes and re-preview rather than assuming a
+   partial "looks good" covers the whole script.
+
+This applies to first drafts and to edits alike — a tweaked step list gets
+re-reviewed before the next `npm run capture`/`render`, not just the first
+one.
+
+## Save the take?
+
+After `npm run render` finishes successfully, ask the user whether to
+save this take to `local-renders/<name>/` as a local copy (see the
+existing `grantland-v1`/`v2`/`v3`-style naming in that directory for
+precedent — an incrementing suffix per attempt at the same demo). If yes,
+copy `output/final.mp4` (and `output/timing.json` if useful for reference)
+into that directory yourself. If no, leave it in `output/final.mp4` as-is
+— remember the "one demo at a time" caveat below before starting another
+demo.
 
 ## Demo files stay local, not committed
 

@@ -57,6 +57,10 @@ anyone manually recording a screen or hand-timing a voiceover to it.
 ## Usage
 
 ```bash
+# 0. (optional, free, instant) Preview the narration script before
+#    spending anything on TTS/capture/render
+npm run preview -- steps/example-flow.json
+
 # 1. Generate narration audio + timing from a step list
 npm run tts -- steps/example-flow.json
 
@@ -66,6 +70,11 @@ npm run capture -- steps/example-flow.json --env staging
 # 3. Composite: real footage + voiceover + music + captions -> final MP4
 npm run render
 ```
+
+`npm run preview` reads only the step list JSON — no OpenAI/Playwright/
+Remotion calls — and prints each step's action + narration line with a
+rough duration estimate, so you can sanity-check the whole script before
+running anything that costs time or money.
 
 Output lands in `output/final.mp4`.
 
@@ -115,6 +124,7 @@ sync with each other.
 | `padding`    | `96` (px inset around the footage on the output canvas) |
 | `cornerRadius` | `12` (px, on the footage's corners) |
 | `shadow`     | `true` (drop shadow under the footage) |
+| `captions`   | `false` — burned-in on-screen captions, timed off each step's narration window |
 
 The final video is always rendered onto a fixed 1920x1080 canvas,
 regardless of the captured viewport — the real footage is scaled (never
@@ -150,6 +160,7 @@ built-in desktop Chrome default still gets flagged.
 
 - `config/` — per-environment settings (base URL, storageState path). No secrets committed.
 - `steps/` — your step list JSON files (the "direction" you write).
+- `scripts/preview-script.ts` — free, instant narration script preview (no API/browser calls) for reviewing a step list before running the real pipeline.
 - `scripts/tts.ts` — narration generation + timing measurement.
 - `scripts/capture.ts` — Playwright runner, paced to narration timing.
 - `remotion/` — compositing project; imports the *real* captured video as background.
