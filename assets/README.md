@@ -18,3 +18,6 @@ Optional user-supplied assets go here.
   Unlike music, there's no auto-detection — set `meta.background` in the
   step list to the file's path explicitly (see README.md). Gitignored,
   same as music — bring your own.
+- A logo shown on the intro/outro title cards, if either is enabled. Same
+  as background — no auto-detection, set `meta.logoPath` explicitly (see
+  README.md). Gitignored, bring your own.

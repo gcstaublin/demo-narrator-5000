@@ -21,6 +21,7 @@ if (!STEP_FILE) {
 // measured clip durations are the source of truth for that).
 const WORDS_PER_SECOND = 2.5;
 const DEFAULT_GAP_MS = 400; // must match tts.ts's DEFAULT_GAP_MS
+const DEFAULT_CARD_DURATION_SEC = 3; // must match tts.ts's DEFAULT_CARD_DURATION_SEC
 
 type Step = {
   id: string;
@@ -44,9 +45,35 @@ console.log(
       : meta.musicPath ?? "auto-detect from assets/"
   }`
 );
+// Same resolution rule as tts.ts: no fallback to meta.title (that field
+// already means something else — a descriptive label) — a card only shows
+// if its own *Title is explicitly set.
+const introTitle = meta.introTitle;
+const outroTitle = meta.outroTitle;
+const introDurationSec = introTitle
+  ? meta.introDurationSec ?? DEFAULT_CARD_DURATION_SEC
+  : 0;
+const outroDurationSec = outroTitle
+  ? meta.outroDurationSec ?? DEFAULT_CARD_DURATION_SEC
+  : 0;
+if (meta.logoPath && !introTitle && !outroTitle) {
+  console.log(
+    `Note: meta.logoPath is set but no intro/outro card will show (neither introTitle nor outroTitle/meta.title is set) — the logo won't appear anywhere.\n`
+  );
+}
+
 console.log("─".repeat(72));
 
 let totalSec = 0;
+
+if (introTitle) {
+  console.log(`[INTRO CARD] (~${introDurationSec.toFixed(1)}s)`);
+  console.log(`   "${introTitle}"`);
+  if (meta.introSubtitle) console.log(`   "${meta.introSubtitle}"`);
+  console.log("");
+  totalSec += introDurationSec;
+}
+
 steps.forEach((step, i) => {
   const gapSec = (step.postDelayMs ?? DEFAULT_GAP_MS) / 1000;
   const words = step.narration ? step.narration.trim().split(/\s+/).length : 0;
@@ -63,6 +90,14 @@ steps.forEach((step, i) => {
   }
   console.log("");
 });
+
+if (outroTitle) {
+  console.log(`[OUTRO CARD] (~${outroDurationSec.toFixed(1)}s)`);
+  console.log(`   "${outroTitle}"`);
+  if (meta.outroSubtitle) console.log(`   "${meta.outroSubtitle}"`);
+  console.log("");
+  totalSec += outroDurationSec;
+}
 
 console.log("─".repeat(72));
 console.log(`${steps.length} steps, ~${totalSec.toFixed(0)}s estimated total runtime\n`);

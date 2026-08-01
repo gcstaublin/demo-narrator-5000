@@ -4,7 +4,7 @@
 
 A "demo" here means writing a new `steps/*.json` step list (optionally
 paired with a new `config/*.json` environment). Before writing the first
-line of either, ask the user for these six things — don't default any of
+line of either, ask the user for these seven things — don't default any of
 them silently. Most users driving this tool aren't developers and won't
 know these are configurable at all unless asked directly in plain
 language — don't rely on them knowing to dig into `meta` fields or
@@ -44,14 +44,29 @@ README tables themselves.
    - **Custom** — ask what they want changed (padding amount, corner
      rounding, shadow on/off, background color/gradient/image path) and
      set those fields directly rather than forcing them into a preset.
+7. **Intro/outro title cards.** Optional cards shown before/after the demo
+   (`meta.introTitle`/`introSubtitle`, `meta.outroTitle`/`outroSubtitle`,
+   each ~3s by default via `meta.introDurationSec`/`outroDurationSec`), plus
+   an optional logo (`meta.logoPath`, staged from `assets/` — explicit path
+   only, doesn't auto-detect the way `musicPath` does). Ask whether they
+   want either card at all before writing any copy for them — this is
+   opt-in, not a default every demo gets. `introTitle` and `outroTitle` are
+   independent; a demo can have one without the other. Don't reuse
+   `meta.title` as the intro card's text even though the names are
+   similar — `title` is a separate, pre-existing field (just a descriptive
+   label, not rendered) and conflating them would put unintended text on
+   screen. This copy gets refined in the same script-review pass as
+   narration (see below) — `npm run preview` prints it alongside the step
+   list.
 
-All six map directly onto fields the tool already supports per-demo
+All seven map directly onto fields the tool already supports per-demo
 (`meta.viewport`, `meta.voice`, `meta.musicPath`, `meta.captions`,
-`meta.padding`/`cornerRadius`/`shadow`/`background`, and the step list
-itself) — see README.md's "Per-demo config (meta)" section. The gap to
-avoid is conversational, not technical: the tool has always supported
-per-demo overrides; the failure mode is an agent picking values for the
-user instead of asking.
+`meta.padding`/`cornerRadius`/`shadow`/`background`,
+`meta.introTitle`/`introSubtitle`/`outroTitle`/`outroSubtitle`/`logoPath`,
+and the step list itself) — see README.md's "Per-demo config (meta)"
+section. The gap to avoid is conversational, not technical: the tool has
+always supported per-demo overrides; the failure mode is an agent picking
+values for the user instead of asking.
 
 ## Script review before the expensive steps
 

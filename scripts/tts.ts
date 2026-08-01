@@ -50,6 +50,9 @@ if (!apiKey || apiKey.startsWith("REPLACE_WITH_") || apiKey === "sk-...") {
 const DEFAULT_GAP_MS = 400;
 const OPENAI_TTS_MODEL = "gpt-4o-mini-tts";
 const DEFAULT_VOICE = "alloy"; // used when a step list doesn't set meta.voice
+// How long the intro/outro title cards hold on screen, when shown — see
+// meta.introTitle/outroTitle below.
+const DEFAULT_CARD_DURATION_SEC = 3;
 
 type Step = {
   id: string;
@@ -81,6 +84,25 @@ type Meta = {
   // narration windows as the audio. Off by default — see README.md's
   // meta table.
   captions?: boolean;
+  // Intro/outro title cards, shown before/after the captured demo. Each is
+  // opt-in independently — a card only renders if its *Title is set, so
+  // step lists that predate this feature (or just don't set these) are
+  // unaffected. Deliberately does NOT fall back to `title` above — `title`
+  // already has an established meaning (a descriptive label, shown only in
+  // npm run preview's header) on every existing step list, so reusing it
+  // here would silently add a 3s intro card to demos that never asked for
+  // one just because they happen to set `title`.
+  introTitle?: string;
+  introSubtitle?: string;
+  introDurationSec?: number;
+  outroTitle?: string;
+  outroSubtitle?: string;
+  outroDurationSec?: number;
+  // Explicit path only — unlike musicPath, this does NOT auto-detect an
+  // image sitting in assets/, since picking the wrong image as a logo is a
+  // much more visible mistake than picking the wrong background track.
+  // undefined/null -> no logo. string -> use that exact file.
+  logoPath?: string | null;
   [key: string]: unknown;
 };
 
@@ -202,6 +224,17 @@ async function main() {
     `ffmpeg -y -f concat -safe 0 -i "${concatListPath}" -c copy audio/narration-track.mp3`
   );
 
+  // A card only renders if its own title is explicitly set — see the Meta
+  // type's comment on why this doesn't fall back to meta.title.
+  const introTitle = meta.introTitle;
+  const outroTitle = meta.outroTitle;
+  const introDurationSec = introTitle
+    ? meta.introDurationSec ?? DEFAULT_CARD_DURATION_SEC
+    : 0;
+  const outroDurationSec = outroTitle
+    ? meta.outroDurationSec ?? DEFAULT_CARD_DURATION_SEC
+    : 0;
+
   // viewport and musicPath are resolved here (not read directly by capture.ts
   // or prepare-assets.sh from the step list) so there's one place downstream
   // scripts look for "what this demo actually asked for" — same reasoning as
@@ -220,6 +253,13 @@ async function main() {
         cornerRadius: meta.cornerRadius,
         shadow: meta.shadow,
         captions: meta.captions ?? false,
+        introTitle,
+        introSubtitle: meta.introSubtitle,
+        introDurationSec,
+        outroTitle,
+        outroSubtitle: meta.outroSubtitle,
+        outroDurationSec,
+        logoPath: meta.logoPath,
         steps: timing,
       },
       null,
