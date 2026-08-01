@@ -171,17 +171,37 @@ async function main() {
   for (const step of steps) {
     console.log(`Executing ${step.id}: ${step.action}`);
     const actionStart = Date.now();
+    const t = timingById.get(step.id) as any;
 
+    // For actions with an on-screen target, record where the target sits
+    // (in viewport coordinates, same space as the recorded video) so the
+    // Remotion composite can draw a synthetic cursor traveling between real
+    // click/fill points — Playwright's own automated actions never move a
+    // visible pointer, so there's nothing to record from the browser itself.
     switch (step.action) {
       case "goto":
         await page.goto(resolveGotoUrl(config.baseUrl, step.path));
         break;
-      case "click":
+      case "click": {
+        const box = await page.locator(step.selector!).boundingBox();
+        if (box && t) {
+          t.cursorX = Math.round(box.x + box.width / 2);
+          t.cursorY = Math.round(box.y + box.height / 2);
+          t.cursorAction = "click";
+        }
         await page.click(step.selector!);
         break;
-      case "fill":
+      }
+      case "fill": {
+        const box = await page.locator(step.selector!).boundingBox();
+        if (box && t) {
+          t.cursorX = Math.round(box.x + box.width / 2);
+          t.cursorY = Math.round(box.y + box.height / 2);
+          t.cursorAction = "fill";
+        }
         await page.fill(step.selector!, step.value ?? "");
         break;
+      }
       case "wait":
         await page.waitForTimeout(step.ms ?? 500);
         break;
@@ -216,7 +236,6 @@ async function main() {
     // would run longer than planned and the whole capture would drift later
     // and later behind the narration track. Instead we only wait out
     // whatever's left of the budget after the action's own elapsed time.
-    const t = timingById.get(step.id) as any;
     const narrationDurationMs =
       t && typeof t.durationSec === "number" ? t.durationSec * 1000 : 1200;
     // DEFAULT_GAP_MS must match scripts/tts.ts's fallback — see the comment
