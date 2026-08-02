@@ -29,17 +29,25 @@ const envName = args.includes("--env")
 
 type Step = {
   id: string;
-  action: "goto" | "click" | "fill" | "wait" | "scroll";
+  action: "goto" | "click" | "fill" | "wait" | "waitFor" | "scroll";
   path?: string;
   selector?: string;
   value?: string;
   ms?: number;
+  timeoutMs?: number;
   amount?: number;
   x?: number;
   y?: number;
   narration?: string;
   postDelayMs?: number;
 };
+
+// Must match README's documented default for waitFor. Playwright's own
+// locator.waitFor() defaults its timeout to 0 (wait forever) when omitted —
+// that's a worse failure mode than picking a default ourselves, since a
+// step author who forgets timeoutMs would otherwise hang the capture
+// indefinitely instead of just moving on after a reasonable wait.
+const DEFAULT_WAITFOR_TIMEOUT_MS = 30000;
 
 // A step's `path` is always relative to the app rooted at `baseUrl` — it
 // should extend baseUrl, never replace it. `new URL(path, baseUrl)` doesn't
@@ -210,6 +218,19 @@ async function main() {
       }
       case "wait":
         await page.waitForTimeout(step.ms ?? 500);
+        break;
+      case "waitFor":
+        // Swallow the timeout instead of throwing — a condition that never
+        // arrives (e.g. a reply that doesn't come back in time) should let
+        // the demo proceed rather than crash the whole capture.
+        await page
+          .locator(step.selector!)
+          .waitFor({ timeout: step.timeoutMs ?? DEFAULT_WAITFOR_TIMEOUT_MS })
+          .catch(() => {
+            console.warn(
+              `${step.id}: waitFor timed out after ${step.timeoutMs ?? DEFAULT_WAITFOR_TIMEOUT_MS}ms waiting for "${step.selector}" — proceeding anyway.`
+            );
+          });
         break;
       case "scroll": {
         const vp = page.viewportSize() ?? viewport;
