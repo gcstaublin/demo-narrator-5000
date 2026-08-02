@@ -11,14 +11,21 @@ import path from "node:path";
 
 const args = process.argv.slice(2);
 const stepFile = args[0];
-const envName = args.includes("--env")
-  ? args[args.indexOf("--env") + 1]
-  : "staging";
 
 if (!stepFile) {
   console.error("Usage: npm run capture -- steps/<file>.json --env <env>");
   process.exit(1);
 }
+
+const data = JSON.parse(fs.readFileSync(stepFile, "utf-8"));
+
+// --env wins if passed explicitly; otherwise fall back to the step list's
+// own meta.env (its declared home environment), then "staging". Without
+// this fallback, a demo authored with meta.env: "prod" would silently
+// capture against staging if --env were ever forgotten on the command line.
+const envName = args.includes("--env")
+  ? args[args.indexOf("--env") + 1]
+  : data.meta?.env ?? "staging";
 
 type Step = {
   id: string;
@@ -52,7 +59,6 @@ async function main() {
   const config = JSON.parse(
     fs.readFileSync(path.join("config", `${envName}.json`), "utf-8")
   );
-  const data = JSON.parse(fs.readFileSync(stepFile, "utf-8"));
   const steps: Step[] = data.steps;
 
   let timing: any = null;
