@@ -64,6 +64,10 @@ type Step = {
 
 type Meta = {
   title?: string;
+  // Not read by this script — capture.ts uses it as the default --env when
+  // the flag isn't passed on the command line. Declared here only so the
+  // Meta type stays the single source of truth for what a step list's meta
+  // block can contain.
   env?: string;
   startPath?: string;
   voice?: string;

@@ -116,6 +116,7 @@ sync with each other.
 
 | field        | fallback when omitted                              |
 |--------------|-----------------------------------------------------|
+| `env`        | the `--env` CLI flag, or `"staging"` if neither is set — see note below |
 | `voice`      | `alloy` — any OpenAI TTS voice name |
 | `viewport`   | the env's `config/<env>.json` viewport | 
 | `musicPath`  | auto-detects a single `.mp3`/`.wav`/`.m4a` in `assets/`, or silence if none |
@@ -129,6 +130,13 @@ sync with each other.
 | `outroTitle` / `outroSubtitle` | no outro card — set `outroTitle` to add one (subtitle is optional) |
 | `introDurationSec` / `outroDurationSec` | `3` (seconds) — only applies if the matching card is shown |
 | `logoPath`   | no logo — a path to an image file, shown above the title on both cards if set |
+
+Unlike the rest of this table, `env` isn't resolved by `npm run tts` into
+`output/timing.json` — it's read directly from the step list by
+`npm run capture`, since which environment to load has to be known before
+`capture.ts` can even find `config/<env>.json`. The `--env` CLI flag always
+wins if passed; `meta.env` is only the default used when the flag is
+omitted.
 
 The final video is always rendered onto a fixed 1920x1080 canvas,
 regardless of the captured viewport — the real footage is scaled (never
