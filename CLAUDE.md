@@ -27,7 +27,15 @@ README tables themselves.
 3. **Backing music.** None, an existing track in `assets/`, or a new file
    the user provides. Never assume silence or auto-detect without asking.
 4. **The actual test scenario.** Never invent the route/flow/steps
-   yourself — ask what the user specifically wants demoed.
+   yourself — ask what the user specifically wants demoed. If a step in
+   that scenario depends on external/asynchronous latency rather than
+   normal UI rendering — a message delivery, a reply, an async job, or
+   anything else whose real-world timing isn't under this tool's control —
+   use a `waitFor` step (see README's "Step list format") and ask how long
+   to allow before moving on, rather than relying on its 30s default. The
+   default exists for ordinary UI waits; a step like "wait for the
+   policyholder's reply" needs an explicit, larger `timeoutMs` because 30s
+   genuinely isn't enough there.
 5. **Captions.** Burned-in on-screen captions, on or off (`meta.captions`).
    Default is `false` if the user doesn't care — but ask, don't silently
    default.

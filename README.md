@@ -100,6 +100,7 @@ narration clip's length already provides.
 | `click`  | `selector`                      | Click the element matching `selector`. |
 | `fill`   | `selector`, `value`             | Type `value` into the element matching `selector`. |
 | `wait`   | `ms`                            | Pause for `ms` (default 500), no page interaction. |
+| `waitFor` | `selector`, `timeoutMs` (optional) | Wait for the element matching `selector` to become visible, up to `timeoutMs` (default 30000). Unlike `wait`, this moves on as soon as the condition is met instead of always burning the full duration — and it never throws: if the element doesn't show up in time, a warning is logged and the demo proceeds anyway. |
 | `scroll` | `amount`, `x`, `y` (all optional) | Scroll the page by `amount` px (default 400) via a mouse wheel event at `(x, y)` — defaults to roughly the left-third of the viewport, useful for pages with independently-scrolling panels. |
 
 `config/<env>.json`'s `storageStatePath` is optional — omit it (or leave it
