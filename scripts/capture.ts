@@ -118,7 +118,18 @@ async function main() {
 
   fs.mkdirSync("output/video-tmp", { recursive: true });
 
-  const browser = await chromium.launch({ headless: true });
+  // Some target apps' client-side browser detection flags Playwright's
+  // bundled Chromium as unsupported (shows a "This browser is not
+  // supported" banner) even with a spoofed desktop Chrome UA — that
+  // detection can look past the UA string at engine-level signals real
+  // Chrome has and bundled Chromium doesn't. Setting `browserChannel` in an
+  // env's config launches real Chrome instead (still headless). Opt-in per
+  // environment — absent by default, so other environments keep launching
+  // bundled Chromium unchanged (no new install requirement for them).
+  const browser = await chromium.launch({
+    headless: true,
+    channel: config.browserChannel || undefined,
+  });
 
   // Playwright's default UA advertises itself as headless/automated (e.g.
   // "HeadlessChrome"), which some target apps' client-side browser-detection
