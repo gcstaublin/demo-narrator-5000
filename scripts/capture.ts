@@ -126,6 +126,11 @@ async function main() {
   // env's config launches real Chrome instead (still headless). Opt-in per
   // environment — absent by default, so other environments keep launching
   // bundled Chromium unchanged (no new install requirement for them).
+  console.log(
+    config.browserChannel
+      ? `Launching real Chrome (channel: ${config.browserChannel}) ...`
+      : "Launching bundled Chromium ..."
+  );
   const browser = await chromium.launch({
     headless: true,
     channel: config.browserChannel || undefined,

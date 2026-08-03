@@ -182,6 +182,16 @@ mid-recording — set `meta.userAgent` (or `userAgent` in `config/<env>.json`
 for an env-wide default) to override it with a specific UA string if the
 built-in desktop Chrome default still gets flagged.
 
+If a target app's browser detection still flags Playwright even with a
+spoofed UA — some checks look past the UA string at engine-level signals
+that only real Chrome has — set `browserChannel: "chrome"` in that env's
+`config/<env>.json` to make `capture.ts` launch real Chrome instead of
+bundled Chromium (still headless, no other behavior change). This is
+opt-in per environment and unrelated to `auth/capture-login.ts`'s
+`chromeUserDataDir` (see `auth/README.md`) — that one launches a headed,
+persistent-profile Chrome for interactive login capture; this one launches
+a headless, throwaway Chrome for the recording itself.
+
 ## Directory guide
 
 - `config/` — per-environment settings (base URL, storageState path). No secrets committed.
