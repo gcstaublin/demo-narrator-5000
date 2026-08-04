@@ -29,7 +29,7 @@ const envName = args.includes("--env")
 
 type Step = {
   id: string;
-  action: "goto" | "click" | "fill" | "wait" | "waitFor" | "scroll";
+  action: "goto" | "click" | "fill" | "wait" | "waitFor" | "scroll" | "hover" | "select";
   path?: string;
   selector?: string;
   value?: string;
@@ -40,6 +40,7 @@ type Step = {
   y?: number;
   narration?: string;
   postDelayMs?: number;
+  required?: boolean;
 };
 
 // Must match README's documented default for waitFor. Playwright's own
@@ -232,20 +233,54 @@ async function main() {
         await page.fill(step.selector!, step.value ?? "");
         break;
       }
+      case "hover": {
+        const box = await page.locator(step.selector!).boundingBox();
+        if (box && t) {
+          t.cursorX = Math.round(box.x + box.width / 2);
+          t.cursorY = Math.round(box.y + box.height / 2);
+          t.cursorAction = "hover";
+        }
+        await page.hover(step.selector!);
+        // Dwell so a target's CSS :hover transition (the whole point of
+        // this action) actually plays out on camera instead of flashing by
+        // in a single frame.
+        await page.waitForTimeout(step.ms ?? 1000);
+        break;
+      }
+      case "select": {
+        // <select> elements aren't fillable — Playwright's page.fill()
+        // throws on anything but an <input>/<textarea>/[contenteditable].
+        // selectOption() is the dedicated API, matched by value or label.
+        const box = await page.locator(step.selector!).boundingBox();
+        if (box && t) {
+          t.cursorX = Math.round(box.x + box.width / 2);
+          t.cursorY = Math.round(box.y + box.height / 2);
+          t.cursorAction = "select";
+        }
+        await page.selectOption(step.selector!, step.value ?? "");
+        break;
+      }
       case "wait":
         await page.waitForTimeout(step.ms ?? 500);
         break;
       case "waitFor":
-        // Swallow the timeout instead of throwing — a condition that never
-        // arrives (e.g. a reply that doesn't come back in time) should let
-        // the demo proceed rather than crash the whole capture.
+        // Swallow the timeout instead of throwing by default — a condition
+        // that never arrives (e.g. a reply that doesn't come back in time)
+        // should let the demo proceed rather than crash the whole capture.
+        // `required: true` opts out of that leniency for preconditions
+        // where proceeding anyway would just produce a broken recording
+        // further downstream (e.g. confirming login actually succeeded) —
+        // better to fail immediately with a clear cause than run 20 more
+        // steps into a confusing, unrelated-looking timeout.
         await page
           .locator(step.selector!)
           .waitFor({ timeout: step.timeoutMs ?? DEFAULT_WAITFOR_TIMEOUT_MS })
           .catch(() => {
-            console.warn(
-              `${step.id}: waitFor timed out after ${step.timeoutMs ?? DEFAULT_WAITFOR_TIMEOUT_MS}ms waiting for "${step.selector}" — proceeding anyway.`
-            );
+            const message = `${step.id}: waitFor timed out after ${step.timeoutMs ?? DEFAULT_WAITFOR_TIMEOUT_MS}ms waiting for "${step.selector}"`;
+            if (step.required) {
+              throw new Error(`${message} — required step, aborting capture.`);
+            }
+            console.warn(`${message} — proceeding anyway.`);
           });
         break;
       case "scroll": {
@@ -299,16 +334,6 @@ async function main() {
   await context.close();
   await browser.close();
 
-  // Playwright names the recorded file automatically; find and normalize it.
-  const files = fs.readdirSync("output/video-tmp");
-  const recorded = files.find((f) => f.endsWith(".webm"));
-  if (!recorded) throw new Error("No recording produced.");
-  fs.renameSync(
-    path.join("output/video-tmp", recorded),
-    "output/raw-capture.webm"
-  );
-  fs.rmSync("output/video-tmp", { recursive: true, force: true });
-
   const actualDurationSec = (Date.now() - captureStart) / 1000;
 
   // Persist the viewport and real elapsed capture time back into
@@ -323,6 +348,28 @@ async function main() {
       2
     )
   );
+
+  // Playwright names the recorded file automatically; find and normalize
+  // it. prepare-assets.sh refuses to render when timing.json is newer than
+  // raw-capture.webm (its signal that npm run tts ran after the last
+  // capture, so footage pacing is stale) — but timing.json's
+  // viewport/duration writeback above always touches it once more at the
+  // end of every capture run regardless of whether tts reran, so
+  // raw-capture.webm has to end up the newer of the two on every run.
+  // Renaming alone doesn't achieve that: fs.renameSync preserves the
+  // source file's original mtime (from whenever Playwright's recorder
+  // actually finished writing it, well before this point) rather than
+  // resetting it — so the mtime has to be bumped explicitly.
+  const files = fs.readdirSync("output/video-tmp");
+  const recorded = files.find((f) => f.endsWith(".webm"));
+  if (!recorded) throw new Error("No recording produced.");
+  fs.renameSync(
+    path.join("output/video-tmp", recorded),
+    "output/raw-capture.webm"
+  );
+  const now = new Date();
+  fs.utimesSync("output/raw-capture.webm", now, now);
+  fs.rmSync("output/video-tmp", { recursive: true, force: true });
 
   console.log("Saved output/raw-capture.webm");
 }
