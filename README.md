@@ -100,8 +100,10 @@ narration clip's length already provides.
 | `click`  | `selector`                      | Click the element matching `selector`. |
 | `fill`   | `selector`, `value`             | Type `value` into the element matching `selector`. |
 | `wait`   | `ms`                            | Pause for `ms` (default 500), no page interaction. |
-| `waitFor` | `selector`, `timeoutMs` (optional) | Wait for the element matching `selector` to become visible, up to `timeoutMs` (default 30000). Unlike `wait`, this moves on as soon as the condition is met instead of always burning the full duration — and it never throws: if the element doesn't show up in time, a warning is logged and the demo proceeds anyway. |
+| `waitFor` | `selector`, `timeoutMs` (optional), `required` (optional) | Wait for the element matching `selector` to become visible, up to `timeoutMs` (default 30000). Unlike `wait`, this moves on as soon as the condition is met instead of always burning the full duration — and by default it never throws: if the element doesn't show up in time, a warning is logged and the demo proceeds anyway. Set `required: true` for preconditions where proceeding without it would just produce a broken recording further downstream (e.g. confirming a login actually succeeded before continuing) — this aborts the capture immediately with a clear error instead of failing later with a confusing, unrelated-looking timeout. |
 | `scroll` | `amount`, `x`, `y` (all optional) | Scroll the page by `amount` px (default 400) via a mouse wheel event at `(x, y)` — defaults to roughly the left-third of the viewport, useful for pages with independently-scrolling panels. |
+| `hover`  | `selector`, `ms` (optional)      | Move the mouse over the element matching `selector` and dwell for `ms` (default 1000) — long enough for a CSS `:hover` transition (image zoom, tooltip, dropdown reveal) to actually play out on camera. |
+| `select` | `selector`, `value`             | Choose an option in a `<select>` element matching `selector`, by option `value`. Unlike `fill`, which only works on `<input>`/`<textarea>`/`[contenteditable]` elements. |
 
 `config/<env>.json`'s `storageStatePath` is optional — omit it (or leave it
 `null`) for public pages that don't need a login session.
